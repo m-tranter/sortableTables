@@ -12,14 +12,14 @@ function sortableTable(myTable) {
     var op = 0;
 
     for (var cell of myTable.rows[0].cells) {
-        cols.push(cell.innerHTML);
-        funcs[cell.innerHTML] = "";
+        cols.push(cell.innerText);
+        funcs[cell.innerText] = "";
         setUp(cell);
     }
 
     for (var k = 0; k < myTable.rows[1].cells.length; k++) {
         let f = cols[k];
-        let str = myTable.rows[1].cells[k].innerHTML;
+        let str = myTable.rows[1].cells[k].innerText;
         let date = parseDate(str);
         if (date != null) {
             funcs[f] = sortDate(f);
@@ -34,16 +34,19 @@ function sortableTable(myTable) {
         items.push({});
         for (var j = 0; j < myTable.rows[i].cells.length; j++) {
             items[i - 1][cols[j]] = myTable.rows[i].cells[j].innerHTML;
+            items[i - 1][`${cols[j]}inner`] = myTable.rows[i].cells[j].innerText;
         }
     }
 
     function sortInitialNum(f) {
+        f += 'inner';
         return (a, b) => {
             return (toFloat(a[f]) - toFloat(b[f])) * op;
         };
     }
 
     function sortStr(f) {
+        f += 'inner';
         return (a, b) => {
             let x = a[f].toLowerCase();
             let y = b[f].toLowerCase();
@@ -58,6 +61,7 @@ function sortableTable(myTable) {
     }
 
     function sortDate(f) {
+        f += 'inner';
         return (a, b) => {
             let x = parseDate(a[f]);
             let y = parseDate(b[f]);
@@ -72,7 +76,7 @@ function sortableTable(myTable) {
     }
 
     function setUp(e) {
-        let temp = e.innerHTML;
+        let temp = e.innerText;
         e.setAttribute("tabindex", "0");
         e.addEventListener(
             "mouseover",
