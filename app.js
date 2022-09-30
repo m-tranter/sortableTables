@@ -10,6 +10,12 @@ function sortableTable(myTable) {
     var funcs = {};
     var lastSort = "";
     var op = 0;
+    
+    const note = document.createElement("p");
+    note.appendChild(document.createTextNode("Click on a heading to sort by that column."));
+    note.classList.add("cec-green");
+    myTable.parentNode.insertBefore(note, myTable);
+    
 
     for (var cell of myTable.rows[0].cells) {
         cols.push(cell.innerText);
