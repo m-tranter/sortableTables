@@ -1,4 +1,7 @@
-"use strict"; function makeSortable(e) { const rows = Array.from(e.rows); const reg = /^-?[0-9]\d*(\.\d+)?/;
+"use strict"; 
+function makeSortable(e) { 
+  const rows = Array.from(e.rows); 
+  const reg = /^-?[0-9]\d*(\.\d+)?/;
   const curr = /^£?[0-9]\d*(\.\d+)?/;
   const funcs = {};
   const icons = {};
@@ -51,8 +54,8 @@
       return (parseFloat(a[f].slice(1)) - parseFloat(b[f].slice(1)));
     }
   }
-  
-    function sortDate(f) {
+
+  function sortDate(f) {
     f += "inner";
     return (a, b) => {
       if (a[f] < b[f]) {
@@ -81,35 +84,44 @@
   }
 
   function setUp(e) {
-    const temp = e.innerText;
+    const text = e.innerText;
     const row = document.createElement('div');
     const container = document.createElement("div");
     const titleDiv = document.createElement('div');
-    const icon = document.createElement('div');
+    const iconDiv = document.createElement('div');
     const up = document.createElement('span');
     const down = document.createElement('span');
+    // Use utf up and down arrows.
     up.innerHTML = "&#9650;";
     down.innerHTML = "&#9660;";
-    container.classList.add("container");
-    row.classList.add("row", "align-items-center");
+    // Clear out the th element.
     e.firstChild.remove();
     e.classList.add("p-0");
-    icon.classList.add("col-2", "p-0");
+    // Create bootstrap column structure.
+    container.classList.add("container");
+    row.classList.add("row", "align-items-center");
+    iconDiv.classList.add("col-1", "p-0");
+    titleDiv.classList.add("col-11", "ps-2");
+    // Put the column name in the new title div.
+    titleDiv.innerText = text
+    // Set up positioning of the icons.
     up.classList.add("position-relative");
     down.classList.add("position-relative");
-    up.setAttribute("style", "color: gray; bottom: .35rem;");
-    icons[`${temp}up`] = up;
-    icons[`${temp}down`] = down;
-    down.setAttribute("style", "color: gray; top: .3rem; right: 1rem;");
-    titleDiv.classList.add("col-10", "ps-1", "pe-3");
-    titleDiv.innerText = temp;
-    icon.appendChild(up);
-    icon.appendChild(down);
+    up.setAttribute("style", "color: gray; bottom: .43rem;");
+    down.setAttribute("style", "color: gray; top: .35rem; right: 1rem;");
+    // Save the elem ids so we can change colours.
+    icons[`${text}up`] = up;
+    icons[`${text}down`] = down;
+    // Build the element.
+    iconDiv.appendChild(up);
+    iconDiv.appendChild(down);
     row.appendChild(titleDiv);
-    row.appendChild(icon);
+    row.appendChild(iconDiv);
     container.appendChild(row);
     e.appendChild(container);
+
     e.setAttribute("tabindex", "0");
+    e.setAttribute("style", "min-width: 10rem;");
     e.addEventListener(
       "mouseover",
       () => (e.style.backgroundColor = "PaleGreen")
@@ -117,10 +129,10 @@
     e.addEventListener("focus", () => (e.style.backgroundColor = "PaleGreen"));
     e.addEventListener("mouseout", () => (e.style.backgroundColor = "White"));
     e.addEventListener("blur", () => (e.style.backgroundColor = "White"));
-    e.addEventListener("click", () => sortByField(temp));
+    e.addEventListener("click", () => sortByField(text));
     e.addEventListener("keydown", (e) => {
       if (e.code === "Enter") {
-        sortByField(temp);
+        sortByField(text);
       }
     });
   }
