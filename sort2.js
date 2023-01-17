@@ -1,11 +1,7 @@
-"use strict";
-
-function makeSortable(e) {
-  const rows = Array.from(e.rows);
-  const reg = /^-?[0-9]\d*(\.\d+)?/;
+"use strict"; function makeSortable(e) { const rows = Array.from(e.rows); const reg = /^-?[0-9]\d*(\.\d+)?/;
   const curr = /^£?[0-9]\d*(\.\d+)?/;
   const funcs = {};
-  const diamond = "&#10208;";
+  const icons = {};
 
   const note = document.createElement("p");
   note.appendChild(
@@ -85,13 +81,34 @@ function makeSortable(e) {
   }
 
   function setUp(e) {
-    let temp = e.innerText;
-    var icon = document.createElement('span');
-    icon.innerHTML = diamond;
-    icon.style.float = "right";
-    let thead = e.firstChild;
-    thead.after(icon);
-    icon.setAttribute('id', temp);
+    const temp = e.innerText;
+    const row = document.createElement('div');
+    const container = document.createElement("div");
+    const titleDiv = document.createElement('div');
+    const icon = document.createElement('div');
+    const up = document.createElement('span');
+    const down = document.createElement('span');
+    up.innerHTML = "&#9650;";
+    down.innerHTML = "&#9660;";
+    container.classList.add("container");
+    row.classList.add("row", "align-items-center");
+    e.firstChild.remove();
+    e.classList.add("p-0");
+    icon.classList.add("col-2", "p-0");
+    up.classList.add("position-relative");
+    down.classList.add("position-relative");
+    up.setAttribute("style", "color: gray; bottom: .35rem;");
+    icons[`${temp}up`] = up;
+    icons[`${temp}down`] = down;
+    down.setAttribute("style", "color: gray; top: .3rem; right: 1rem;");
+    titleDiv.classList.add("col-10", "ps-1", "pe-3");
+    titleDiv.innerText = temp;
+    icon.appendChild(up);
+    icon.appendChild(down);
+    row.appendChild(titleDiv);
+    row.appendChild(icon);
+    container.appendChild(row);
+    e.appendChild(container);
     e.setAttribute("tabindex", "0");
     e.addEventListener(
       "mouseover",
@@ -109,9 +126,9 @@ function makeSortable(e) {
   }
 
   function resetIcons() {
-    console.log(funcs);
     Object.keys(funcs).forEach(id => {
-      document.getElementById(id).innerHTML = diamond;
+      icons[`${id}up`].style.color = "gray";
+      icons[`${id}down`].style.color = "gray";
     });
   }
 
@@ -120,11 +137,11 @@ function makeSortable(e) {
     let temp = [...items];
     temp.sort(funcs[f]);
     if (temp.some((e,i) => e.index !== items[i].index)) {
-      document.getElementById(f).innerHTML = "&#x25B5;";
       items = [...temp];
+      icons[`${f}up`].style.color = "black";
     } else {
-      document.getElementById(f).innerHTML = "&#x25BF;";
       items = [...temp].reverse();
+      icons[`${f}down`].style.color = "black";
     }
     redrawTable();
   }
