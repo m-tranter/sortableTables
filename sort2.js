@@ -1,62 +1,65 @@
-"use strict"; 
-function makeSortable(e) { 
-  const rows = Array.from(e.rows); 
+<script src="https://cdn.jsdelivr.net/npm/luxon@3.0.4/build/global/luxon.min.js"></script>
+<script>
+  "use strict"; 
+function makeSortable(e) {
+  const rows = Array.from(e.rows);
+  const heads = Array.from(rows[0].cells);
   const reg = /^-?[0-9]\d*(\.\d+)?/;
   const curr = /^£?[0-9]\d*(\.\d+)?/;
-  const funcs = {};
-  const icons = {};
-
   const note = document.createElement("p");
+  note.setAttribute("id", "tableNote");
   note.appendChild(
     document.createTextNode("Click on a heading to sort by that column.")
   );
   note.classList.add("cec-green");
   e.parentNode.insertBefore(note, e);
 
-  Array.from(rows[1].cells).forEach((cell, k) => {
-    let f = rows[0].cells[k].innerText;
-    let str = cell.innerText;
+  heads.forEach((cell, k) => {
+    cell.id = rows[0].cells[k].innerText;
+    let str = rows[1].cells[k].innerText;
     if (parseDate(str)) {
-      funcs[f] = sortDate(f);
+      cell.func = sortDate;
     } else if (str.match(reg)) {
-      funcs[f] = sortInitialNum(f); 
+      cell.func = sortInitialNum;
     } else if (str.match(curr)) {
-      funcs[f] = sortCurr(f);
+      cell.func = sortCurr;
     } else {
-      funcs[f] = sortStr(f); 
+      cell.func = sortStr;
     }
-  });
-
-  Array.from(rows[0].cells).forEach((cell) => {
     setUp(cell);
   });
 
-  let items = Array.from(rows).slice(1).reduce((acc, row, i) => {
-    return [...acc, Array.from(row.cells).reduce((objAcc, cell, j) => {
-      return {...objAcc, ...{"index": i, [key(j)]: cell.innerHTML, [`${key(j)}inner`]: parseDate(cell.innerText) 
-        ? new luxon.DateTime.fromFormat(cell.innerText, "dd/MM/yyyy")
-        : cell.innerText}}}, {})]}, []);
-
-  function key(ind) {
-    return Object.keys(funcs)[ind];
-  }
+  let items = rows.slice(1).reduce((acc, row, i) => {
+    return [
+      ...acc,
+      Array.from(row.cells).reduce((objAcc, cell, j) => {
+        return {
+          ...objAcc,
+          ...{
+            index: i,
+            [heads[j].id]: cell.innerHTML,
+            [`${heads[j].id}inner`]: parseDate(cell.innerText)
+              ? new luxon.DateTime.fromFormat(cell.innerText, "dd/MM/yyyy")
+              : cell.innerText,
+          },
+        };
+      }, {}),
+    ];
+  }, []);
 
   function sortInitialNum(f) {
-    f += "inner";
     return (a, b) => {
-      return (toFloat(a[f]) - toFloat(b[f]));
+      return toFloat(a[f]) - toFloat(b[f]);
     };
   }
 
   function sortCurr(f) {
-    f += 'inner';
     return (a, b) => {
-      return (parseFloat(a[f].slice(1)) - parseFloat(b[f].slice(1)));
-    }
+      return parseFloat(a[f].slice(1)) - parseFloat(b[f].slice(1));
+    };
   }
 
   function sortDate(f) {
-    f += "inner";
     return (a, b) => {
       if (a[f] < b[f]) {
         return -1;
@@ -69,7 +72,6 @@ function makeSortable(e) {
   }
 
   function sortStr(f) {
-    f += "inner";
     return (a, b) => {
       let x = a[f].toLowerCase();
       let y = b[f].toLowerCase();
@@ -85,33 +87,30 @@ function makeSortable(e) {
 
   function setUp(e) {
     const text = e.innerText;
-    const row = document.createElement('div');
+    const row = document.createElement("div");
     const container = document.createElement("div");
-    const titleDiv = document.createElement('div');
-    const iconDiv = document.createElement('div');
-    const up = document.createElement('span');
-    const down = document.createElement('span');
-    // Use utf up and down arrows.
+    const titleDiv = document.createElement("div");
+    const iconDiv = document.createElement("div");
+    const up = document.createElement("span");
+    const down = document.createElement("span");
+    // Use unicode up and down arrows.
     up.innerHTML = "&#9650;";
     down.innerHTML = "&#9660;";
+    up.classList.add("upIcon");
+    down.classList.add("downIcon");
     // Clear out the th element.
     e.firstChild.remove();
-    e.classList.add("p-0");
+    e.classList.add("p-0", "align-middle", "tableHead");
     // Create bootstrap column structure.
     container.classList.add("container");
     row.classList.add("row", "align-items-center");
     iconDiv.classList.add("col-1", "p-0");
-    titleDiv.classList.add("col-11", "ps-2");
+    titleDiv.classList.add("col-11", "ps-2", "pt-1");
     // Put the column name in the new title div.
-    titleDiv.innerText = text
-    // Set up positioning of the icons.
-    up.classList.add("position-relative");
-    down.classList.add("position-relative");
-    up.setAttribute("style", "color: gray; bottom: .43rem;");
-    down.setAttribute("style", "color: gray; top: .35rem; right: 1rem;");
+    titleDiv.innerText = text;
     // Save the elem ids so we can change colours.
-    icons[`${text}up`] = up;
-    icons[`${text}down`] = down;
+    e.up = up;
+    e.down = down;
     // Build the element.
     iconDiv.appendChild(up);
     iconDiv.appendChild(down);
@@ -119,41 +118,34 @@ function makeSortable(e) {
     row.appendChild(iconDiv);
     container.appendChild(row);
     e.appendChild(container);
-
     e.setAttribute("tabindex", "0");
-    e.setAttribute("style", "min-width: 10rem;");
-    e.addEventListener(
-      "mouseover",
-      () => (e.style.backgroundColor = "PaleGreen")
-    );
-    e.addEventListener("focus", () => (e.style.backgroundColor = "PaleGreen"));
-    e.addEventListener("mouseout", () => (e.style.backgroundColor = "White"));
-    e.addEventListener("blur", () => (e.style.backgroundColor = "White"));
-    e.addEventListener("click", () => sortByField(text));
+    e.addEventListener("click", () => {
+      sortByField(e);
+    });
     e.addEventListener("keydown", (e) => {
       if (e.code === "Enter") {
-        sortByField(text);
+        sortByField(e);
       }
     });
   }
 
   function resetIcons() {
-    Object.keys(funcs).forEach(id => {
-      icons[`${id}up`].style.color = "gray";
-      icons[`${id}down`].style.color = "gray";
+    heads.forEach((obj) => {
+      obj.up.style.color = "gray";
+      obj.down.style.color = "gray";
     });
   }
 
-  function sortByField(f) {
+  function sortByField(e) {
     resetIcons();
     let temp = [...items];
-    temp.sort(funcs[f]);
-    if (temp.some((e,i) => e.index !== items[i].index)) {
+    temp.sort(e.func(e.id + "inner"));
+    if (temp.some((e, i) => e.index !== items[i].index)) {
       items = [...temp];
-      icons[`${f}up`].style.color = "black";
+      e.up.style.color = "black";
     } else {
       items = [...temp].reverse();
-      icons[`${f}down`].style.color = "black";
+      e.down.style.color = "black";
     }
     redrawTable();
   }
@@ -168,18 +160,15 @@ function makeSortable(e) {
   }
 
   function redrawTable() {
-    Array.from(rows)
-      .slice(1)
-      .forEach((row, i) => {
-        Array.from(row.cells).forEach((cell, j) => {
-          cell.innerHTML = items[i][key(j)];
-        });
+    rows.slice(1).forEach((row, i) => {
+      Array.from(row.cells).forEach((cell, j) => {
+        cell.innerHTML = items[i][heads[j].id];
       });
+    });
   }
 }
-
-
 
 Array.from(document.getElementsByTagName("table")).forEach((e) => {
   makeSortable(e);
 });
+</script>
